@@ -529,6 +529,12 @@ async function getApiKeyUsdSpendSince(apiKeyId: string, sinceIso: string): Promi
     total += toNumber(row.storedCost);
     if (toNumber(row.unpricedUnitRequests) > 0) unpriced.add(`${provider}/${model}`);
     if (toNumber(row.unmeteredRequests) === 0) continue;
+    // Decision endpoints can have different prices from chat for the same model.
+    // Without a reported cost retain unknown spend and the existing fail-closed policy.
+    if (row.decisionEndpoint) {
+      unpriced.add(`${provider}/${model}`);
+      continue;
+    }
 
     const { costUsd, priced, failed } = await calculateCostDetailed(
       provider,
